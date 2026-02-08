@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Sick Of It</title>
+    <link rel="shortcut icon" href="Game/SickOfIt/TemplateData/favicon.ico">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #000;
+        position: fixed;
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
+        touch-action: none;
+      }
+
+      #unity-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #000;
+      }
+
+      #unity-canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        cursor: default;
+        touch-action: none;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
+      #unity-loading-bar {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        display: none;
+        z-index: 1500;
+      }
+
+      #unity-logo {
+        width: 154px;
+        height: 130px;
+        background: url('Game/SickOfIt/TemplateData/unity-logo-dark.png') no-repeat center;
+        background-size: contain;
+        margin: 0 auto 20px;
+      }
+
+      #unity-progress-bar-empty {
+        width: 300px;
+        height: 18px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 9px;
+      }
+
+      #unity-progress-bar-full {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #4a90e2, #2ecc71);
+        border-radius: 9px;
+        transition: width 0.3s ease;
+      }
+
+      #unity-warning {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        max-width: 80%;
+      }
+
+      #unity-warning > div {
+        background: rgba(255, 0, 0, 0.9);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        margin: 5px 0;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+      }
+
+      #unity-warning > div.warning {
+        background: rgba(255, 193, 7, 0.9);
+        color: #000;
+      }
+
+      #start-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        cursor: pointer;
+      }
+
+      #start-overlay h1 {
+        color: #fff;
+        font-family: Arial, sans-serif;
+        font-size: 48px;
+        margin-bottom: 30px;
+        text-shadow: 0 0 20px rgba(74, 144, 226, 0.8);
+      }
+
+      #start-button {
+        background: linear-gradient(135deg, #4a90e2, #2ecc71);
+        color: white;
+        border: none;
+        padding: 20px 60px;
+        font-size: 24px;
+        font-weight: bold;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 5px 20px rgba(46, 204, 113, 0.4);
+      }
+
+      #start-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(46, 204, 113, 0.6);
+      }
+
+      #start-button:active {
+        transform: translateY(0);
+      }
+
+      @media (max-width: 768px) {
+        #start-overlay h1 {
+          font-size: 36px;
+          margin-bottom: 20px;
+        }
+
+        #start-button {
+          padding: 15px 40px;
+          font-size: 20px;
+        }
+      }
+
+      body {
+        overscroll-behavior-y: contain;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="start-overlay">
+      <h1>Sick Of It</h1>
+      <button id="start-button">CLICK TO START</button>
+    </div>
+    <div id="unity-container">
+      <canvas id="unity-canvas" tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"></div>
+    </div>
+    <script>
+      var canvas = document.querySelector("#unity-canvas");
+      var container = document.querySelector("#unity-container");
+      var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      function unityShowBanner(msg, type) {
+        var warningBanner = document.querySelector("#unity-warning");
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        if (type == 'warning') div.className = 'warning';
+        warningBanner.appendChild(div);
+        if (type == 'error') {
+          div.style = 'background: rgba(255, 0, 0, 0.9); padding: 10px;';
+        } else {
+          if (type == 'warning') div.style = 'background: rgba(255, 193, 7, 0.9); color: #000; padding: 10px;';
+          setTimeout(function() {
+            if (warningBanner.contains(div)) {
+              warningBanner.removeChild(div);
+            }
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      var gameName = "SickOfIt";
+      var buildUrl = "Game/" + gameName + "/Build/" + gameName;
+      var loaderUrl = buildUrl + ".loader.js";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + ".data",
+        frameworkUrl: buildUrl + ".framework.js",
+        codeUrl: buildUrl + ".wasm",
+        streamingAssetsUrl: "Game/" + gameName + "/StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "Sick Of It",
+        productVersion: "1.0",
+        showBanner: unityShowBanner,
+      };
+
+      if (isMobile) {
+        document.addEventListener('touchmove', function(e) {
+          if (e.target === canvas || e.target === container) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+
+        document.body.addEventListener('touchstart', function(e) {
+          if (e.target === canvas) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+      }
+
+      function resizeCanvas() {
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        
+        if (isMobile && window.visualViewport) {
+          width = window.visualViewport.width;
+          height = window.visualViewport.height;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        canvas.style.width = width + "px";
+        canvas.style.height = height + "px";
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+      
+      if (isMobile) {
+        window.addEventListener('orientationchange', function() {
+          setTimeout(resizeCanvas, 100);
+        });
+        
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', resizeCanvas);
+        }
+      }
+      
+      resizeCanvas();
+
+      var startButton = document.getElementById('start-button');
+      
+      function startGame() {
+        document.getElementById('start-overlay').style.display = 'none';
+        document.querySelector("#unity-loading-bar").style.display = "block";
+        loadUnityGame();
+      }
+
+      startButton.addEventListener('click', startGame);
+      startButton.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        startGame();
+      }, { passive: false });
+
+      function loadUnityGame() {
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = function() {
+          createUnityInstance(canvas, config, function(progress) {
+            document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+          }).then(function(unityInstance) {
+            document.querySelector("#unity-loading-bar").style.display = "none";
+            window.unityInstance = unityInstance;
+            
+            function tryFullscreen() {
+              if (isIOS) {
+                console.log('iOS detected - skipping fullscreen request (not fully supported)');
+                return;
+              }
+
+              var elem = container;
+              if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(function(err) {
+                  console.log("Fullscreen request failed:", err);
+                });
+              } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+              } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+              }
+            }
+
+            if (!isIOS) {
+              tryFullscreen();
+            }
+
+            var canvasElement = canvas;
+            var needsPointerLockReacquire = false;
+
+            document.addEventListener('pointerlockchange', function() {
+              if (document.pointerLockElement !== canvasElement) {
+                needsPointerLockReacquire = true;
+              } else {
+                needsPointerLockReacquire = false;
+              }
+            });
+
+            function reacquirePointerLock() {
+              if (needsPointerLockReacquire && document.pointerLockElement !== canvasElement) {
+                canvasElement.requestPointerLock = canvasElement.requestPointerLock ||
+                                                    canvasElement.mozRequestPointerLock ||
+                                                    canvasElement.webkitRequestPointerLock;
+                if (canvasElement.requestPointerLock) {
+                  canvasElement.requestPointerLock();
+                }
+              }
+            }
+
+            if (!isMobile) {
+              canvasElement.addEventListener('mousedown', reacquirePointerLock);
+              canvasElement.addEventListener('click', reacquirePointerLock);
+            } else {
+              canvasElement.addEventListener('touchstart', function(e) {
+                // Mobile touch handling
+              }, { passive: false });
+            }
+
+          }).catch(function(message) {
+            unityShowBanner(message, 'error');
+          });
+        };
+
+        script.onerror = function() {
+          unityShowBanner("Failed to load Unity game. Please check your connection and try again.", 'error');
+        };
+
+        document.body.appendChild(script);
+      }
+
+      window.addEventListener('unhandledrejection', function(event) {
+        if (event.reason && event.reason.name === 'NotAllowedError' && 
+            event.reason.message && event.reason.message.includes('Pointer Lock')) {
+          event.preventDefault();
+          console.log('Pointer lock will be re-acquired on next interaction');
+        }
+      });
+    </script>
+  </body>
+</html>
