@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
     <meta name="mobile-web-app-capable" content="yes">
     <title>Sick Of It</title>
-    <link rel="shortcut icon" href="Game/v1/SickOfIt/TemplateData/favicon.ico">
+    <link rel="shortcut icon" href="Game/v4/SickOfIt/TemplateData/favicon.ico">
     <style>
       * {
         margin: 0;
@@ -59,7 +59,7 @@
       #unity-logo {
         width: 154px;
         height: 130px;
-        background: url('Game/v1/SickOfIt/TemplateData/unity-logo-dark.png') no-repeat center;
+        background: url('Game/v4/SickOfIt/TemplateData/unity-logo-dark.png') no-repeat center;
         background-size: contain;
         margin: 0 auto 20px;
       }
@@ -161,12 +161,59 @@
         }
       }
 
+      #rotate-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 3000;
+      }
+
+      #rotate-overlay.show {
+        display: flex;
+      }
+
+      #rotate-icon {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 20px;
+        animation: rotate-pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes rotate-pulse {
+        0%, 100% { transform: rotate(0deg) scale(1); }
+        50% { transform: rotate(90deg) scale(1.1); }
+      }
+
+      #rotate-message {
+        color: #fff;
+        font-family: Arial, sans-serif;
+        font-size: 24px;
+        text-align: center;
+        padding: 0 20px;
+      }
+
       body {
         overscroll-behavior-y: contain;
       }
     </style>
   </head>
   <body>
+    <div id="rotate-overlay">
+      <svg id="rotate-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="20" y="10" width="60" height="80" rx="5" stroke="white" stroke-width="3" fill="none"/>
+        <path d="M40 30 L60 30" stroke="white" stroke-width="2"/>
+        <circle cx="50" cy="75" r="5" fill="white"/>
+        <path d="M70 45 L85 45 L85 25 M85 25 L80 30 M85 25 L90 30" stroke="#4a90e2" stroke-width="2" fill="none"/>
+      </svg>
+      <div id="rotate-message">Please rotate your device to landscape</div>
+    </div>
     <div id="start-overlay">
       <h1>Sick Of It</h1>
       <button id="start-button">CLICK TO START</button>
@@ -184,8 +231,14 @@
     <script>
       var canvas = document.querySelector("#unity-canvas");
       var container = document.querySelector("#unity-container");
-      var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      
+      // Enhanced mobile detection that includes iPads with iPadOS 13+
+      var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || // iPad with iPadOS 13+
+                     ('ontouchstart' in window); // Any touch-capable device
+      
+      var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPad with iPadOS 13+
 
       function unityShowBanner(msg, type) {
         var warningBanner = document.querySelector("#unity-warning");
@@ -211,7 +264,7 @@
       }
 
       var gameName = "SickOfIt";
-      var gameVersion = "v1"; // Update this when you publish a new game build
+      var gameVersion = "v4"; // Update this when you publish a new game build
       var buildUrl = "Game/" + gameVersion + "/" + gameName + "/Build/" + gameName;
       var loaderUrl = buildUrl + ".loader.js";
       var config = {
@@ -276,11 +329,52 @@
       
       resizeCanvas();
 
+      // Orientation handling for mobile devices
+      var rotateOverlay = document.getElementById('rotate-overlay');
+      
+      function checkOrientation() {
+        if (!isMobile) return;
+        
+        var isPortrait = window.innerHeight > window.innerWidth;
+        
+        // Show rotate message if in portrait mode
+        if (isPortrait) {
+          rotateOverlay.classList.add('show');
+        } else {
+          rotateOverlay.classList.remove('show');
+        }
+      }
+      
+      async function lockOrientationToLandscape() {
+        if (!isMobile) return;
+        
+        try {
+          // Try to lock to landscape (works in fullscreen on supported browsers)
+          if (screen.orientation && screen.orientation.lock) {
+            await screen.orientation.lock('landscape');
+            console.log('Orientation locked to landscape');
+          }
+        } catch (error) {
+          console.log('Orientation lock not supported or requires fullscreen:', error.message);
+        }
+      }
+      
+      // Check orientation on load and when it changes
+      if (isMobile) {
+        checkOrientation();
+        window.addEventListener('resize', checkOrientation);
+        window.addEventListener('orientationchange', checkOrientation);
+      }
+
       var startButton = document.getElementById('start-button');
       
       function startGame() {
         document.getElementById('start-overlay').style.display = 'none';
         document.querySelector("#unity-loading-bar").style.display = "block";
+        
+        // Attempt to lock orientation on user interaction
+        lockOrientationToLandscape();
+        
         loadUnityGame();
       }
 
@@ -308,13 +402,19 @@
 
               var elem = container;
               if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(function(err) {
+                elem.requestFullscreen().then(function() {
+                  // Try to lock orientation when entering fullscreen (most reliable)
+                  lockOrientationToLandscape();
+                }).catch(function(err) {
                   console.log("Fullscreen request failed:", err);
                 });
               } else if (elem.webkitRequestFullscreen) {
                 elem.webkitRequestFullscreen();
+                // Webkit doesn't return a promise, so try locking after a short delay
+                setTimeout(lockOrientationToLandscape, 100);
               } else if (elem.msRequestFullscreen) {
                 elem.msRequestFullscreen();
+                setTimeout(lockOrientationToLandscape, 100);
               }
             }
 
