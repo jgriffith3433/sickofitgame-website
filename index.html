@@ -8,12 +8,17 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
     <meta name="mobile-web-app-capable" content="yes">
     <title>Sick Of It</title>
-    <link rel="shortcut icon" href="Game/v6/SickOfIt/TemplateData/favicon.ico">
+    <link rel="shortcut icon" href="Game/v10/SickOfIt/TemplateData/favicon.ico">
     <style>
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
+        /* Prevent text size adjustment on orientation change */
+        -webkit-text-size-adjust: 100%;
+        -moz-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+        text-size-adjust: 100%;
       }
 
       html, body {
@@ -59,7 +64,7 @@
       #unity-logo {
         width: 154px;
         height: 130px;
-        background: url('Game/v6/SickOfIt/TemplateData/unity-logo-dark.png') no-repeat center;
+        background: url('Game/v10/SickOfIt/TemplateData/unity-logo-dark.png') no-repeat center;
         background-size: contain;
         margin: 0 auto 20px;
       }
@@ -264,7 +269,7 @@
       }
 
       var gameName = "SickOfIt";
-      var gameVersion = "v6"; // Update this when you publish a new game build
+      var gameVersion = "v10"; // Update this when you publish a new game build
       var buildUrl = "Game/" + gameVersion + "/" + gameName + "/Build/" + gameName;
       var loaderUrl = buildUrl + ".loader.js";
       var config = {
@@ -298,6 +303,11 @@
             e.preventDefault();
           }
         }, { passive: false });
+        
+        // Prevent any scrolling that might trigger zoom
+        window.addEventListener('scroll', function() {
+          window.scrollTo(0, 0);
+        }, { passive: true });
       }
 
       function resizeCanvas() {
@@ -305,20 +315,6 @@
         var height = window.innerHeight;
         
         if (isMobile && window.visualViewport) {
-          // Get the visual viewport scale to detect unwanted zoom
-          var scale = window.visualViewport.scale || 1;
-          
-          // If the scale is not 1, we're zoomed in - try to reset it
-          if (scale !== 1) {
-            console.log('Visual viewport scale detected:', scale, '- attempting reset');
-            // Force viewport reset by updating meta tag
-            var viewport = document.querySelector('meta[name=viewport]');
-            if (viewport) {
-              viewport.setAttribute('content', 'width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover');
-            }
-          }
-          
-          // Use visual viewport dimensions (accounting for any remaining scale)
           width = window.visualViewport.width;
           height = window.visualViewport.height;
         }
@@ -332,31 +328,42 @@
       window.addEventListener('resize', resizeCanvas);
       
       if (isMobile) {
-        // Use orientationchange with longer delay for proper viewport reset
-        window.addEventListener('orientationchange', function() {
-          // Force viewport meta refresh on orientation change
+        var orientationChangeHandler = function() {
+          // Force scroll to top to prevent zoom issues
+          window.scrollTo(0, 0);
+          document.body.scrollTop = 0;
+          document.documentElement.scrollTop = 0;
+          
+          // Force a hard viewport reset
           var viewport = document.querySelector('meta[name=viewport]');
           if (viewport) {
+            // Temporarily remove and re-add viewport meta tag to force browser reset
             var content = viewport.getAttribute('content');
-            viewport.setAttribute('content', 'width=device-width');
-            setTimeout(function() {
+            viewport.setAttribute('content', 'width=1');
+            
+            // Use requestAnimationFrame to ensure browser processes the change
+            requestAnimationFrame(function() {
               viewport.setAttribute('content', content);
-              // Wait for viewport to settle before resizing canvas
-              setTimeout(resizeCanvas, 100);
-            }, 10);
+              
+              // Force another scroll to top after viewport reset
+              window.scrollTo(0, 0);
+              
+              // Wait for browser to settle, then resize canvas
+              setTimeout(function() {
+                window.scrollTo(0, 0); // One more time for good measure
+                resizeCanvas();
+              }, 200);
+            });
           } else {
-            setTimeout(resizeCanvas, 100);
+            setTimeout(resizeCanvas, 200);
           }
-        });
+        };
+        
+        // Listen to both orientationchange and resize for better coverage
+        window.addEventListener('orientationchange', orientationChangeHandler);
         
         if (window.visualViewport) {
           window.visualViewport.addEventListener('resize', resizeCanvas);
-          window.visualViewport.addEventListener('scroll', function() {
-            // Prevent unwanted zoom from scrolling
-            if (window.visualViewport.scale !== 1) {
-              resizeCanvas();
-            }
-          });
         }
       }
       
