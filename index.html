@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
     <meta name="mobile-web-app-capable" content="yes">
     <title>Sick Of It</title>
-    <link rel="shortcut icon" href="Game/v4/SickOfIt/TemplateData/favicon.ico">
+    <link rel="shortcut icon" href="Game/v6/SickOfIt/TemplateData/favicon.ico">
     <style>
       * {
         margin: 0;
@@ -59,7 +59,7 @@
       #unity-logo {
         width: 154px;
         height: 130px;
-        background: url('Game/v4/SickOfIt/TemplateData/unity-logo-dark.png') no-repeat center;
+        background: url('Game/v6/SickOfIt/TemplateData/unity-logo-dark.png') no-repeat center;
         background-size: contain;
         margin: 0 auto 20px;
       }
@@ -264,7 +264,7 @@
       }
 
       var gameName = "SickOfIt";
-      var gameVersion = "v4"; // Update this when you publish a new game build
+      var gameVersion = "v6"; // Update this when you publish a new game build
       var buildUrl = "Game/" + gameVersion + "/" + gameName + "/Build/" + gameName;
       var loaderUrl = buildUrl + ".loader.js";
       var config = {
@@ -305,6 +305,20 @@
         var height = window.innerHeight;
         
         if (isMobile && window.visualViewport) {
+          // Get the visual viewport scale to detect unwanted zoom
+          var scale = window.visualViewport.scale || 1;
+          
+          // If the scale is not 1, we're zoomed in - try to reset it
+          if (scale !== 1) {
+            console.log('Visual viewport scale detected:', scale, '- attempting reset');
+            // Force viewport reset by updating meta tag
+            var viewport = document.querySelector('meta[name=viewport]');
+            if (viewport) {
+              viewport.setAttribute('content', 'width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover');
+            }
+          }
+          
+          // Use visual viewport dimensions (accounting for any remaining scale)
           width = window.visualViewport.width;
           height = window.visualViewport.height;
         }
@@ -318,12 +332,31 @@
       window.addEventListener('resize', resizeCanvas);
       
       if (isMobile) {
+        // Use orientationchange with longer delay for proper viewport reset
         window.addEventListener('orientationchange', function() {
-          setTimeout(resizeCanvas, 100);
+          // Force viewport meta refresh on orientation change
+          var viewport = document.querySelector('meta[name=viewport]');
+          if (viewport) {
+            var content = viewport.getAttribute('content');
+            viewport.setAttribute('content', 'width=device-width');
+            setTimeout(function() {
+              viewport.setAttribute('content', content);
+              // Wait for viewport to settle before resizing canvas
+              setTimeout(resizeCanvas, 100);
+            }, 10);
+          } else {
+            setTimeout(resizeCanvas, 100);
+          }
         });
         
         if (window.visualViewport) {
           window.visualViewport.addEventListener('resize', resizeCanvas);
+          window.visualViewport.addEventListener('scroll', function() {
+            // Prevent unwanted zoom from scrolling
+            if (window.visualViewport.scale !== 1) {
+              resizeCanvas();
+            }
+          });
         }
       }
       
