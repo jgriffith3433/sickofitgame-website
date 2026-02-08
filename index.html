@@ -223,6 +223,13 @@
         productName: "Sick Of It",
         productVersion: "1.0",
         showBanner: unityShowBanner,
+        errorHandler: function(message, filename, lineno) {
+          // Log all errors to console instead of showing alerts
+          console.error('Unity Error:', message);
+          if (filename) console.error('File:', filename);
+          if (lineno) console.error('Line:', lineno);
+          return true; // Suppress alert
+        }
       };
 
       if (isMobile) {
