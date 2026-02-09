@@ -3,23 +3,19 @@
     <type fullname="AspectRatioController" preserve="all" />
     <type fullname="LevelManager" preserve="all" />
     <type fullname="LevelWinTrigger" preserve="all" />
+    <type fullname="LevelWinTriggerGoBackToMainMenu" preserve="all" />
     <type fullname="MobileControllerFramework.Analog" preserve="all" />
-    <type fullname="MobileControllerFramework.ArrowKeys" preserve="all" />
     <type fullname="MobileControllerFramework.Button" preserve="all" />
     <type fullname="MobileControllerFramework.CameraFollow" preserve="all" />
-    <type fullname="MobileControllerFramework.DebugMenu" preserve="all" />
-    <type fullname="MobileControllerFramework.DebugTouch" preserve="all" />
-    <type fullname="MobileControllerFramework.Direction" preserve="all" />
-    <type fullname="MobileControllerFramework.Dpad" preserve="all" />
     <type fullname="MobileControllerFramework.GlobalTapJump" preserve="all" />
     <type fullname="MobileControllerFramework.Heatmap" preserve="all" />
     <type fullname="MobileControllerFramework.HideOnPC" preserve="all" />
-    <type fullname="MobileControllerFramework.Key" preserve="all" />
     <type fullname="MobileControllerFramework.MusicCycler" preserve="all" />
     <type fullname="MobileControllerFramework.TopDownController" preserve="all" />
     <type fullname="MobileControllerFramework.TouchRegionAnalog" preserve="all" />
     <type fullname="SafeAreaHandler" preserve="all" />
     <type fullname="SpriteFramePlayer" preserve="all" />
+    <type fullname="VideoManager" preserve="all" />
   </assembly>
   <assembly fullname="Unity.Addressables, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" preserve="all">
     <type fullname="UnityEngine.AddressableAssets.Addressables" preserve="all" />
@@ -77,11 +73,8 @@
     <type fullname="UnityEngine.SpriteRenderer" preserve="all" />
     <type fullname="UnityEngine.Texture2D" preserve="all" />
     <type fullname="UnityEngine.Transform" preserve="all" />
-    <type fullname="UnityEngine.Events.ArgumentCache" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.Events.PersistentCallGroup" preserve="nothing" serialized="true" />
-    <type fullname="UnityEngine.Events.PersistentListenerMode" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.Events.UnityEvent" preserve="nothing" serialized="true" />
-    <type fullname="UnityEngine.RectOffset" preserve="nothing" serialized="true" />
   </assembly>
   <assembly fullname="UnityEngine.ParticleSystemModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
     <type fullname="UnityEngine.ParticleSystem" preserve="all" />
@@ -98,17 +91,13 @@
   <assembly fullname="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
     <type fullname="UnityEngine.EventSystems.EventSystem" preserve="all" />
     <type fullname="UnityEngine.UI.CanvasScaler" preserve="all" />
-    <type fullname="UnityEngine.UI.ContentSizeFitter" preserve="all" />
     <type fullname="UnityEngine.UI.GraphicRaycaster" preserve="all" />
     <type fullname="UnityEngine.UI.Image" preserve="all" />
-    <type fullname="UnityEngine.UI.RectMask2D" preserve="all" />
-    <type fullname="UnityEngine.UI.ScrollRect" preserve="all" />
-    <type fullname="UnityEngine.UI.VerticalLayoutGroup" preserve="all" />
     <type fullname="UnityEngine.UI.MaskableGraphic/CullStateChangedEvent" preserve="nothing" serialized="true" />
-    <type fullname="UnityEngine.UI.ScrollRect/ScrollRectEvent" preserve="nothing" serialized="true" />
   </assembly>
   <assembly fullname="UnityEngine.UIModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
     <type fullname="UnityEngine.Canvas" preserve="all" />
+    <type fullname="UnityEngine.CanvasGroup" preserve="all" />
     <type fullname="UnityEngine.CanvasRenderer" preserve="all" />
   </assembly>
   <assembly fullname="UnityEngine.TextCoreFontEngineModule">
