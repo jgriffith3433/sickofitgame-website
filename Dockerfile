@@ -4,7 +4,7 @@ FROM nginx:alpine AS base
 # Remove default nginx configuration
 RUN rm /etc/nginx/conf.d/default.conf
 
-# Copy custom nginx configuration
+# Copy custom nginx configuration (changes very rarely)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 80
@@ -14,19 +14,30 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost/health || exit 1
 
-# Development target - for local development with volume mounts
+# Development target - for local development
+# Game/ and index.html are mounted as volumes for live editing.
+# PWA assets are baked in so they're available without additional mounts.
 FROM base AS development
-# Files will be mounted via volumes in docker-compose.dev.yml
+
+# Copy only PWA files (Game/ and index.html come from volume mounts)
+COPY icons/ /usr/share/nginx/html/icons/
+COPY offline.html /usr/share/nginx/html/offline.html
+COPY manifest.json /usr/share/nginx/html/manifest.json
+COPY sw.js /usr/share/nginx/html/sw.js
+
 CMD ["nginx", "-g", "daemon off;"]
 
 # Production target - for deployment with baked-in files
 FROM base AS production
 
-# Copy the Unity WebGL game files (includes Build/ and TemplateData/ subdirectories)
-COPY Game/ /usr/share/nginx/html/Game/
-
-# Copy the optimized index.html for full-screen experience
+# Copy files in order of change frequency (least to most)
+# Game/ is last since it changes most frequently - only this layer rebuilds on game updates
+COPY icons/ /usr/share/nginx/html/icons/
+COPY offline.html /usr/share/nginx/html/offline.html
+COPY manifest.json /usr/share/nginx/html/manifest.json
+COPY sw.js /usr/share/nginx/html/sw.js
 COPY index.html /usr/share/nginx/html/index.html
+COPY Game/ /usr/share/nginx/html/Game/
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]

@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # Use the development target so dev differs from prod (live mounts)
       target: development
     container_name: sickofitgame-dev
     ports:
@@ -11,7 +12,8 @@ services:
       # Mount for live development - update files without rebuilding
       - ./Game:/usr/share/nginx/html/Game
       - ./index.html:/usr/share/nginx/html/index.html
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      # Optional: mount nginx.conf for live nginx edits
+      # - ./nginx.conf:/etc/nginx/conf.d/default.conf
     networks:
       - game-network
     restart: unless-stopped

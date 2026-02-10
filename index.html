@@ -8,7 +8,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
     <meta name="mobile-web-app-capable" content="yes">
     <title>Sick Of It</title>
-    <link rel="shortcut icon" href="Game/v15/SickOfIt/TemplateData/favicon.ico">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <link rel="apple-touch-icon" href="/icons/icon-192.svg">
+    <link rel="shortcut icon" href="Game/v23/SickOfIt/TemplateData/favicon.ico">
     <style>
       * {
         margin: 0;
@@ -64,7 +67,7 @@
       #unity-logo {
         width: 154px;
         height: 130px;
-        background: url('Game/v15/SickOfIt/TemplateData/unity-logo-dark.png') no-repeat center;
+        background: url('Game/v23/SickOfIt/TemplateData/unity-logo-dark.png') no-repeat center;
         background-size: contain;
         margin: 0 auto 20px;
       }
@@ -207,9 +210,113 @@
       body {
         overscroll-behavior-y: contain;
       }
+
+      /* Install banner styling */
+      #install-banner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(30, 30, 30, 0.98);
+        padding: 12px 20px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 5000;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        font-family: Arial, sans-serif;
+        gap: 15px;
+        flex-wrap: wrap;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      #install-banner.show {
+        display: flex;
+        opacity: 1;
+      }
+
+      #install-banner.fade-out {
+        opacity: 0;
+      }
+
+      #install-banner-text {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+        margin: 0;
+        flex: 1;
+        min-width: 200px;
+        text-align: center;
+      }
+
+      #install-banner-text strong {
+        font-weight: bold;
+        color: #fff;
+      }
+
+      #install-banner-buttons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      #install-banner button {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 8px 20px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: Arial, sans-serif;
+        white-space: nowrap;
+      }
+
+      #install-banner button:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-1px);
+      }
+
+      #dismiss-banner {
+        background: transparent;
+        color: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 6px 15px;
+        font-size: 16px;
+      }
+
+      #dismiss-banner:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      @media (max-width: 600px) {
+        #install-banner {
+          padding: 10px 15px;
+        }
+        #install-banner-text {
+          font-size: 12px;
+        }
+        #install-banner button {
+          font-size: 12px;
+          padding: 6px 15px;
+        }
+      }
     </style>
   </head>
   <body>
+    <div id="install-banner">
+      <p id="install-banner-text"><strong>Install for offline play!</strong> Get faster loads and play anytime, anywhere.</p>
+      <div id="install-banner-buttons">
+        <button id="install-button">Install</button>
+        <button id="dismiss-banner">×</button>
+      </div>
+    </div>
     <div id="rotate-overlay">
       <svg id="rotate-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="20" y="10" width="60" height="80" rx="5" stroke="white" stroke-width="3" fill="none"/>
@@ -269,7 +376,7 @@
       }
 
       var gameName = "SickOfIt";
-      var gameVersion = "v15"; // Update this when you publish a new game build
+      var gameVersion = "v23"; // Update this when you publish a new game build
       var buildUrl = "Game/" + gameVersion + "/" + gameName + "/Build/" + gameName;
       var loaderUrl = buildUrl + ".loader.js";
       var config = {
@@ -512,6 +619,98 @@
           console.log('Pointer lock will be re-acquired on next interaction');
         }
       });
+    </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('sw.js').then(function(reg) {
+            console.log('Service worker registered.', reg);
+          }).catch(function(err) {
+            console.error('Service worker registration failed:', err);
+          });
+        });
+      }
+    </script>
+    <script>
+      // Install banner logic
+      (function() {
+        var installBanner = document.getElementById('install-banner');
+        var installButton = document.getElementById('install-button');
+        var dismissButton = document.getElementById('dismiss-banner');
+        var deferredPrompt;
+        var autoFadeTimeout;
+        
+        // Check if user already dismissed the banner
+        var dismissed = localStorage.getItem('pwa-install-dismissed');
+        
+        // Detect platform
+        var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        
+        function showBanner() {
+          installBanner.classList.add('show');
+          // Auto-fade after 10 seconds
+          autoFadeTimeout = setTimeout(function() {
+            hideBanner(false); // false = don't save to localStorage on auto-fade
+          }, 10000);
+        }
+        
+        function hideBanner(remember) {
+          clearTimeout(autoFadeTimeout);
+          installBanner.classList.add('fade-out');
+          setTimeout(function() {
+            installBanner.classList.remove('show', 'fade-out');
+          }, 500);
+          if (remember) {
+            localStorage.setItem('pwa-install-dismissed', 'true');
+          }
+        }
+        
+        // Listen for beforeinstallprompt event (Chrome/Edge/Android)
+        window.addEventListener('beforeinstallprompt', function(e) {
+          e.preventDefault();
+          deferredPrompt = e;
+          
+          if (!dismissed) {
+            showBanner();
+          }
+        });
+        
+        // Show banner for iOS (no beforeinstallprompt support)
+        if (isIOS && !dismissed && !navigator.standalone) {
+          setTimeout(function() {
+            showBanner();
+          }, 1500);
+        }
+        
+        // Install button click
+        installButton.addEventListener('click', function() {
+          if (deferredPrompt) {
+            // Native install prompt
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(function(choiceResult) {
+              if (choiceResult.outcome === 'accepted') {
+                console.log('User installed the app');
+              }
+              deferredPrompt = null;
+              hideBanner(true);
+            });
+          } else {
+            // For iOS or browsers without native prompt, show alert with instructions
+            if (isIOS) {
+              alert('To install:\n1. Tap the Share button (□ with ↑)\n2. Scroll and tap "Add to Home Screen"\n3. Tap "Add"');
+            } else {
+              alert('To install:\nLook for the install icon in your browser address bar, or check your browser menu for "Install" or "Add to Home screen".');
+            }
+            hideBanner(true);
+          }
+        });
+        
+        // Dismiss button
+        dismissButton.addEventListener('click', function() {
+          hideBanner(true);
+        });
+      })();
     </script>
   </body>
 </html>
