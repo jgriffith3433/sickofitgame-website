@@ -3,6 +3,9 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
@@ -356,9 +359,38 @@
           padding: 6px 15px;
         }
       }
+
+      /* Version display styling */
+      #version-display {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 9999;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        font-weight: bold;
+        pointer-events: none;
+        user-select: none;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      @media (max-width: 600px) {
+        #version-display {
+          font-size: 10px;
+          padding: 4px 8px;
+          top: 5px;
+          left: 5px;
+        }
+      }
     </style>
   </head>
   <body>
+    <!-- Version Display -->
+    <div id="version-display">v60</div>
     <div id="install-banner">
       <p id="install-banner-text"><strong>Install for offline play!</strong> Get faster loads and play anytime, anywhere.</p>
       <div id="install-banner-buttons">
@@ -429,17 +461,21 @@
 
       var gameName = "SickOfIt";
       var gameVersion = "v60"; // Update this when you publish a new game build
+      
+      // Update version display
+      document.getElementById('version-display').textContent = gameVersion;
+      
       var buildUrl = "Game/" + gameVersion + "/" + gameName + "/Build/" + gameName;
-      var loaderUrl = buildUrl + ".loader.js";
+      var loaderUrl = buildUrl + ".loader.js?v=" + gameVersion; // Add version query param
       var config = {
         arguments: [],
-        dataUrl: buildUrl + ".data.gz",
-        frameworkUrl: buildUrl + ".framework.js.gz",
-        codeUrl: buildUrl + ".wasm.gz",
+        dataUrl: buildUrl + ".data.gz?v=" + gameVersion,
+        frameworkUrl: buildUrl + ".framework.js.gz?v=" + gameVersion,
+        codeUrl: buildUrl + ".wasm.gz?v=" + gameVersion,
         streamingAssetsUrl: "Game/" + gameVersion + "/" + gameName + "/StreamingAssets",
         companyName: "DefaultCompany",
         productName: "Sick Of It",
-        productVersion: "1.0",
+        productVersion: gameVersion,
         showBanner: unityShowBanner,
         errorHandler: function(message, filename, lineno) {
           // Log all errors to console instead of showing alerts
@@ -677,8 +713,46 @@
         window.addEventListener('load', function() {
           navigator.serviceWorker.register('sw.js').then(function(reg) {
             console.log('Service worker registered.', reg);
+            
+            // Check for updates on visibility change and periodically (every 60 seconds)
+            let updateCheckInterval;
+            
+            const checkForUpdates = () => {
+              if (document.visibilityState === 'visible') {
+                reg.update();
+              }
+            };
+            
+            // Check on visibility change
+            document.addEventListener('visibilitychange', checkForUpdates);
+            
+            // Also check every 60 seconds when visible
+            updateCheckInterval = setInterval(checkForUpdates, 60000);
+            
+            // Handle service worker updates
+            reg.addEventListener('updatefound', function() {
+              const newWorker = reg.installing;
+              console.log('Service worker update found!');
+              
+              newWorker.addEventListener('statechange', function() {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New service worker is installed, prompt user to refresh
+                  console.log('New version available! Activating...');
+                  newWorker.postMessage({ action: 'skipWaiting' });
+                }
+              });
+            });
           }).catch(function(err) {
             console.error('Service worker registration failed:', err);
+          });
+          
+          // Reload page when new service worker takes control
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', function() {
+            if (refreshing) return;
+            refreshing = true;
+            console.log('Service worker updated, reloading page...');
+            window.location.reload();
           });
         });
       }
