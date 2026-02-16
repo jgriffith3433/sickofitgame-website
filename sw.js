@@ -1,12 +1,12 @@
-const CACHE_NAME = 'sickofit-pwa-v2';
+const CACHE_NAME = 'sickofit-pwa-v60';
 const URLS_TO_CACHE = [
-  '/manifest.json',
   '/offline.html',
   '/icons/icon-192.svg',
   '/icons/icon-512.svg'
 ];
 
 self.addEventListener('install', event => {
+  console.log('Service worker installing, cache:', CACHE_NAME);
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(URLS_TO_CACHE))
   );
@@ -14,34 +14,60 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
+  console.log('Service worker activating, cache:', CACHE_NAME);
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
       keys.map(key => {
-        if (key !== CACHE_NAME) return caches.delete(key);
+        if (key !== CACHE_NAME) {
+          console.log('Deleting old cache:', key);
+          return caches.delete(key);
+        }
       })
     ))
   );
   self.clients.claim();
 });
 
+// Handle skipWaiting message from client
+self.addEventListener('message', event => {
+  if (event.data && event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   
-  // NEVER cache HTML files - always fetch from network
-  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html')) {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match('/offline.html'))
-    );
-    return;
-  }
-
-  // For other resources, use cache-first strategy
+  // NETWORK-FIRST strategy for ALL requests
+  // Always try to fetch from network first to avoid caching issues
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request).then(networkResponse => {
-        // Optionally cache new requests - keep minimal for MVP
-        return networkResponse;
-      }).catch(() => caches.match('/offline.html'));
-    })
+    fetch(event.request)
+      .then(response => {
+        // Clone the response before caching
+        const responseClone = response.clone();
+        
+        // Only cache successful responses for offline.html and icons
+        if (response.status === 200 && 
+            (url.pathname.endsWith('/offline.html') || url.pathname.startsWith('/icons/'))) {
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        
+        return response;
+      })
+      .catch(() => {
+        // Only use cache as fallback for offline.html and icons
+        return caches.match(event.request).then(cachedResponse => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          // Return offline page if nothing else works
+          if (event.request.mode === 'navigate') {
+            return caches.match('/offline.html');
+          }
+          return new Response('Network error', { status: 503 });
+        });
+      })
   );
 });
