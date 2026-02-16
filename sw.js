@@ -1,4 +1,6 @@
 const CACHE_NAME = 'sickofit-pwa-v60';
+// Note: manifest.json is intentionally not cached to ensure users always get
+// the latest version and start_url, which is critical for cache busting
 const URLS_TO_CACHE = [
   '/offline.html',
   '/icons/icon-192.svg',

@@ -714,12 +714,20 @@
           navigator.serviceWorker.register('sw.js').then(function(reg) {
             console.log('Service worker registered.', reg);
             
-            // Check for updates every 5 seconds when page is visible
-            setInterval(function() {
+            // Check for updates on visibility change and periodically (every 60 seconds)
+            let updateCheckInterval;
+            
+            const checkForUpdates = () => {
               if (document.visibilityState === 'visible') {
                 reg.update();
               }
-            }, 5000);
+            };
+            
+            // Check on visibility change
+            document.addEventListener('visibilitychange', checkForUpdates);
+            
+            // Also check every 60 seconds when visible
+            updateCheckInterval = setInterval(checkForUpdates, 60000);
             
             // Handle service worker updates
             reg.addEventListener('updatefound', function() {
