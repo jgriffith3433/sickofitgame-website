@@ -1,7 +1,5 @@
-const CACHE_NAME = 'sickofit-pwa-v1';
+const CACHE_NAME = 'sickofit-pwa-v2';
 const URLS_TO_CACHE = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/offline.html',
   '/icons/icon-192.svg',
@@ -27,14 +25,17 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Serve navigation requests with network-first, falling back to offline.html
-  if (event.request.mode === 'navigate') {
+  const url = new URL(event.request.url);
+  
+  // NEVER cache HTML files - always fetch from network
+  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html')) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match('/offline.html'))
     );
     return;
   }
 
+  // For other resources, use cache-first strategy
   event.respondWith(
     caches.match(event.request).then(response => {
       return response || fetch(event.request).then(networkResponse => {

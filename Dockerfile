@@ -15,15 +15,19 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost/health || exit 1
 
 # Development target - for local development
-# Game/ and index.html are mounted as volumes for live editing.
+# Game/, blog/, and index.html are mounted as volumes for live editing.
 # PWA assets are baked in so they're available without additional mounts.
 FROM base AS development
 
-# Copy only PWA files (Game/ and index.html come from volume mounts)
+# Copy only PWA files and blog (Game/, blog/, and index.html can be overridden by volume mounts)
 COPY icons/ /usr/share/nginx/html/icons/
 COPY offline.html /usr/share/nginx/html/offline.html
 COPY manifest.json /usr/share/nginx/html/manifest.json
 COPY sw.js /usr/share/nginx/html/sw.js
+COPY favicon.ico /usr/share/nginx/html/favicon.ico
+COPY images/ /usr/share/nginx/html/images/
+COPY blog/ /usr/share/nginx/html/blog/
+COPY music/ /usr/share/nginx/html/music/
 
 CMD ["nginx", "-g", "daemon off;"]
 
@@ -36,6 +40,10 @@ COPY icons/ /usr/share/nginx/html/icons/
 COPY offline.html /usr/share/nginx/html/offline.html
 COPY manifest.json /usr/share/nginx/html/manifest.json
 COPY sw.js /usr/share/nginx/html/sw.js
+COPY favicon.ico /usr/share/nginx/html/favicon.ico
+COPY images/ /usr/share/nginx/html/images/
+COPY blog/ /usr/share/nginx/html/blog/
+COPY music/ /usr/share/nginx/html/music/
 COPY index.html /usr/share/nginx/html/index.html
 COPY Game/ /usr/share/nginx/html/Game/
 

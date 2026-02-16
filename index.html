@@ -11,7 +11,9 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     <link rel="apple-touch-icon" href="/icons/icon-192.svg">
-    <link rel="shortcut icon" href="Game/v44/SickOfIt/TemplateData/favicon.ico">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
     <style>
       * {
         margin: 0;
@@ -67,7 +69,7 @@
       #unity-logo {
         width: 154px;
         height: 130px;
-        background: url('Game/v44/SickOfIt/TemplateData/unity-logo-dark.png') no-repeat center;
+        background: url('Game/v60/SickOfIt/TemplateData/unity-logo-dark.png') no-repeat center;
         background-size: contain;
         margin: 0 auto 20px;
       }
@@ -135,6 +137,13 @@
         text-shadow: 0 0 20px rgba(74, 144, 226, 0.8);
       }
 
+      #button-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+      }
+
       #start-button {
         background: linear-gradient(135deg, #4a90e2, #2ecc71);
         color: white;
@@ -146,6 +155,32 @@
         cursor: pointer;
         transition: transform 0.2s, box-shadow 0.2s;
         box-shadow: 0 5px 20px rgba(46, 204, 113, 0.4);
+      }
+
+      #blog-button {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        padding: 15px 50px;
+        font-size: 20px;
+        font-weight: bold;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 3px 15px rgba(255, 255, 255, 0.1);
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      #blog-button:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(255, 255, 255, 0.2);
+      }
+
+      #blog-button:active {
+        transform: translateY(0);
       }
 
       #start-button:hover {
@@ -163,9 +198,23 @@
           margin-bottom: 20px;
         }
 
+        #button-container {
+          gap: 15px;
+          width: 90%;
+        }
+
         #start-button {
           padding: 15px 40px;
           font-size: 20px;
+          width: 100%;
+          max-width: 300px;
+        }
+
+        #blog-button {
+          padding: 12px 35px;
+          font-size: 18px;
+          width: 100%;
+          max-width: 300px;
         }
       }
 
@@ -328,7 +377,10 @@
     </div>
     <div id="start-overlay">
       <h1>Sick Of It</h1>
-      <button id="start-button">CLICK TO START</button>
+      <div id="button-container">
+        <button id="start-button">CLICK TO START</button>
+        <a href="blog/index.html" id="blog-button">BLOG</a>
+      </div>
     </div>
     <div id="unity-container">
       <canvas id="unity-canvas" tabindex="-1"></canvas>
@@ -376,7 +428,7 @@
       }
 
       var gameName = "SickOfIt";
-      var gameVersion = "v44"; // Update this when you publish a new game build
+      var gameVersion = "v60"; // Update this when you publish a new game build
       var buildUrl = "Game/" + gameVersion + "/" + gameName + "/Build/" + gameName;
       var loaderUrl = buildUrl + ".loader.js";
       var config = {
