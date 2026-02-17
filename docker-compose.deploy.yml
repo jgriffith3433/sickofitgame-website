@@ -18,6 +18,37 @@ services:
       retries: 3
       start_period: 5s
 
+  umami-db:
+    image: postgres:15-alpine
+    container_name: umami-postgres
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:-change_this_secure_password}
+    volumes:
+      - umami-db-data:/var/lib/postgresql/data
+    networks:
+      - game-network
+    restart: always
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: umami
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:-change_this_secure_password}@umami-db:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${UMAMI_APP_SECRET:-change_this_to_random_32_char_secret}
+    depends_on:
+      - umami-db
+    networks:
+      - game-network
+    restart: always
+
+volumes:
+  umami-db-data:
+
 networks:
   game-network:
     driver: bridge

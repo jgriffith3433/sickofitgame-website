@@ -24,6 +24,7 @@ COPY icons/ /usr/share/nginx/html/icons/
 COPY offline.html /usr/share/nginx/html/offline.html
 COPY manifest.json /usr/share/nginx/html/manifest.json
 COPY sw.js /usr/share/nginx/html/sw.js
+COPY umami-game-events.js /usr/share/nginx/html/umami-game-events.js
 COPY favicon.ico /usr/share/nginx/html/favicon.ico
 COPY images/ /usr/share/nginx/html/images/
 COPY blog/ /usr/share/nginx/html/blog/
@@ -40,6 +41,7 @@ COPY icons/ /usr/share/nginx/html/icons/
 COPY offline.html /usr/share/nginx/html/offline.html
 COPY manifest.json /usr/share/nginx/html/manifest.json
 COPY sw.js /usr/share/nginx/html/sw.js
+COPY umami-game-events.js /usr/share/nginx/html/umami-game-events.js
 COPY favicon.ico /usr/share/nginx/html/favicon.ico
 COPY images/ /usr/share/nginx/html/images/
 COPY blog/ /usr/share/nginx/html/blog/
