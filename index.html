@@ -13,13 +13,13 @@
     <title>Sick Of It</title>
     <!-- Umami Analytics -->
     <script async defer src="/umami/script.js" data-website-id="293705f8-b467-4c6d-a55b-f142a986fdb0"></script>
-    <script src="umami-game-events.js"></script>
-    <link rel="manifest" href="manifest.json">
+    <script src="/umami-game-events.js"></script>
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#000000">
     <link rel="apple-touch-icon" href="/icons/icon-192.svg">
-    <link rel="shortcut icon" href="favicon.ico">
-    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
     <style>
       * {
         margin: 0;
@@ -75,7 +75,7 @@
       #unity-logo {
         width: 154px;
         height: 130px;
-        background: url('Game/v62/SickOfIt/TemplateData/unity-logo-dark.png') no-repeat center;
+        background: url('PreGame/p1/SickOfIt/TemplateData/unity-logo-dark.png') no-repeat center;
         background-size: contain;
         margin: 0 auto 20px;
       }
@@ -163,7 +163,16 @@
         box-shadow: 0 5px 20px rgba(46, 204, 113, 0.4);
       }
 
-      #blog-button {
+      #start-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(46, 204, 113, 0.6);
+      }
+
+      #start-button:active {
+        transform: translateY(0);
+      }
+
+      .secondary-button {
         background: rgba(255, 255, 255, 0.1);
         color: white;
         border: 2px solid rgba(255, 255, 255, 0.3);
@@ -178,23 +187,14 @@
         display: inline-block;
       }
 
-      #blog-button:hover {
+      .secondary-button:hover {
         background: rgba(255, 255, 255, 0.2);
         border-color: rgba(255, 255, 255, 0.5);
         transform: translateY(-2px);
         box-shadow: 0 5px 20px rgba(255, 255, 255, 0.2);
       }
 
-      #blog-button:active {
-        transform: translateY(0);
-      }
-
-      #start-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 30px rgba(46, 204, 113, 0.6);
-      }
-
-      #start-button:active {
+      .secondary-button:active {
         transform: translateY(0);
       }
 
@@ -216,7 +216,7 @@
           max-width: 300px;
         }
 
-        #blog-button {
+        .secondary-button {
           padding: 12px 35px;
           font-size: 18px;
           width: 100%;
@@ -394,7 +394,7 @@
   </head>
   <body>
     <!-- Version Display -->
-    <div id="version-display">v62</div>
+    <div id="version-display">p1</div>
     <div id="install-banner">
       <p id="install-banner-text"><strong>Install for offline play!</strong> Get faster loads and play anytime, anywhere.</p>
       <div id="install-banner-buttons">
@@ -415,7 +415,7 @@
       <h1>Sick Of It</h1>
       <div id="button-container">
         <button id="start-button">CLICK TO START</button>
-        <a href="blog/index.html" id="blog-button">BLOG</a>
+        <a href="blog/index.html" class="secondary-button">Blog</a>
       </div>
     </div>
     <div id="unity-container">
@@ -464,19 +464,20 @@
       }
 
       var gameName = "SickOfIt";
-      var gameVersion = "v62"; // Update this when you publish a new game build
+      var gameVersion = "p1"; // Update this when you publish a new game build
       
       // Update version display
       document.getElementById('version-display').textContent = gameVersion;
       
-      var buildUrl = "Game/" + gameVersion + "/" + gameName + "/Build/" + gameName;
+      // Load from /PreGame instead of relative path
+      var buildUrl = "/PreGame/p1/" + gameName + "/Build/" + gameName;
       var loaderUrl = buildUrl + ".loader.js?v=" + gameVersion; // Add version query param
       var config = {
         arguments: [],
         dataUrl: buildUrl + ".data.gz?v=" + gameVersion,
         frameworkUrl: buildUrl + ".framework.js.gz?v=" + gameVersion,
         codeUrl: buildUrl + ".wasm.gz?v=" + gameVersion,
-        streamingAssetsUrl: "Game/" + gameVersion + "/" + gameName + "/StreamingAssets",
+        streamingAssetsUrl: "/PreGame/p1/" + gameName + "/StreamingAssets",
         companyName: "DefaultCompany",
         productName: "Sick Of It",
         productVersion: gameVersion,
@@ -605,25 +606,14 @@
         window.addEventListener('orientationchange', checkOrientation);
       }
 
-      var startButton = document.getElementById('start-button');
-      
-      function startGame() {
-        document.getElementById('start-overlay').style.display = 'none';
-        document.querySelector("#unity-loading-bar").style.display = "block";
-        
-        // Attempt to lock orientation on user interaction
-        lockOrientationToLandscape();
-        
-        loadUnityGame();
-      }
-
-      startButton.addEventListener('click', startGame);
-      startButton.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        startGame();
-      }, { passive: false });
-
+      // Wait for user to click start button before loading
       function loadUnityGame() {
+        // Hide start overlay
+        document.getElementById('start-overlay').style.display = 'none';
+        
+        // Show loading bar
+        document.querySelector("#unity-loading-bar").style.display = 'block';
+        
         var script = document.createElement("script");
         script.src = loaderUrl;
         script.onload = function() {
@@ -704,6 +694,41 @@
         document.body.appendChild(script);
       }
 
+      // Check if user has already purchased the game
+      (async function checkUserAccess() {
+        try {
+          const response = await fetch('/paywall/check-access', {
+            method: 'GET',
+            credentials: 'include'
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            
+            if (data.hasAccess) {
+              // User has access - change button to link to full game
+              const startButton = document.getElementById('start-button');
+              startButton.textContent = 'Game';
+              
+              // Remove the Unity loading click handler
+              startButton.removeEventListener('click', loadUnityGame);
+              
+              // Add navigation to /Game instead
+              startButton.addEventListener('click', function() {
+                window.location.href = '/Game/';
+              });
+            }
+          }
+          // If request fails or hasAccess is false, keep default behavior of loading PreGame
+        } catch (error) {
+          console.log('Auth check failed, showing demo version');
+          // Keep default behavior on error
+        }
+      })();
+
+      // Attach click handler to start button (may be replaced by checkUserAccess)
+      document.getElementById('start-button').addEventListener('click', loadUnityGame);
+
       window.addEventListener('unhandledrejection', function(event) {
         if (event.reason && event.reason.name === 'NotAllowedError' && 
             event.reason.message && event.reason.message.includes('Pointer Lock')) {
@@ -715,7 +740,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-          navigator.serviceWorker.register('sw.js').then(function(reg) {
+          navigator.serviceWorker.register('/sw.js').then(function(reg) {
             console.log('Service worker registered.', reg);
             
             // Check for updates on visibility change and periodically (every 60 seconds)
@@ -811,6 +836,14 @@
           setTimeout(function() {
             showBanner();
           }, 1500);
+        }
+        
+        // For desktop browsers, show banner even without beforeinstallprompt
+        // This helps users know they can install via browser menu
+        if (!isIOS && !dismissed) {
+          setTimeout(function() {
+            showBanner();
+          }, 2000);
         }
         
         // Install button click

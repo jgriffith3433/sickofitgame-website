@@ -240,3 +240,8 @@ volumes/
 .env
 .env.local
 .env.*.local
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3

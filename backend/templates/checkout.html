@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ site_name }} - Purchase Access</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 480px;
+            width: 100%;
+            margin: 20px;
+            background-color: #1a1a2e;
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid #333;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #ff6b35; font-size: 32px; margin-bottom: 8px; }
+        .header p { color: #aaa; font-size: 16px; }
+        .product-card {
+            background: linear-gradient(135deg, #16213e, #1a1a3e);
+            border: 1px solid #444;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            text-align: center;
+        }
+        .product-card h2 { color: #fff; font-size: 22px; margin-bottom: 8px; }
+        .product-card .price {
+            font-size: 48px;
+            font-weight: 800;
+            color: #00ff88;
+            margin: 16px 0;
+        }
+        .product-card .price span { font-size: 20px; color: #888; }
+        .product-card .desc { color: #aaa; font-size: 14px; }
+        .btn-pay {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #ff6b35, #e85d26);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            text-align: center;
+            text-decoration: none;
+        }
+        .btn-pay:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,107,53,0.4); }
+        .btn-pay:active { transform: translateY(0); }
+        .divider {
+            text-align: center;
+            margin: 24px 0;
+            color: #555;
+            position: relative;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #333;
+        }
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+        .code-link {
+            text-align: center;
+            margin-top: 4px;
+        }
+        .code-link a {
+            color: #ff6b35;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .code-link a:hover { text-decoration: underline; }
+        .features {
+            margin: 24px 0 0 0;
+            padding: 0;
+            list-style: none;
+        }
+        .features li {
+            padding: 8px 0;
+            padding-left: 28px;
+            position: relative;
+            color: #ccc;
+            font-size: 14px;
+        }
+        .features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #00ff88;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ site_name }}</h1>
+            <p>Get instant access</p>
+        </div>
+
+        <div class="product-card">
+            <h2>{{ product.name }}</h2>
+            <div class="price">${{ "%.2f"|format(product.price_cents / 100) }} <span>USD</span></div>
+            <div class="desc">{{ product.description }}</div>
+        </div>
+
+        <form action="/paywall/create-checkout-session" method="POST">
+            <input type="hidden" name="product_id" value="{{ product_id }}">
+            <button type="submit" class="btn-pay">Purchase Access</button>
+        </form>
+
+        <ul class="features">
+            <li>Secure payment via Stripe</li>
+            <li>Instant access after payment</li>
+            <li>No account required</li>
+            <li>Code emailed to you</li>
+            <li>Share it with your friends if you want, I don't care</li>
+        </ul>
+
+        <div class="divider">or</div>
+        <div class="code-link">
+            <a href="/paywall/redeem?product={{ product_id }}">Already have an access code?</a>
+        </div>
+    </div>
+</body>
+</html>
