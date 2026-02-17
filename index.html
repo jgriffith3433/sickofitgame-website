@@ -377,9 +377,16 @@
         font-family: 'Courier New', monospace;
         font-size: 12px;
         font-weight: bold;
-        pointer-events: none;
+        pointer-events: auto;
         user-select: none;
         border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+
+      #version-display:hover {
+        background: rgba(0, 0, 0, 0.9);
+        border-color: rgba(255, 255, 255, 0.4);
       }
 
       @media (max-width: 600px) {
@@ -429,6 +436,44 @@
       <div id="unity-warning"></div>
     </div>
     <script>
+      // Console log capture system
+      var consoleLogs = [];
+      var originalConsole = {
+        log: console.log,
+        warn: console.warn,
+        error: console.error,
+        info: console.info
+      };
+
+      function captureLog(type, args) {
+        var timestamp = new Date().toISOString();
+        var message = Array.from(args).map(function(arg) {
+          if (typeof arg === 'object') {
+            try { return JSON.stringify(arg); }
+            catch(e) { return String(arg); }
+          }
+          return String(arg);
+        }).join(' ');
+        consoleLogs.push('[' + timestamp + '] [' + type.toUpperCase() + '] ' + message);
+      }
+
+      console.log = function() {
+        captureLog('log', arguments);
+        originalConsole.log.apply(console, arguments);
+      };
+      console.warn = function() {
+        captureLog('warn', arguments);
+        originalConsole.warn.apply(console, arguments);
+      };
+      console.error = function() {
+        captureLog('error', arguments);
+        originalConsole.error.apply(console, arguments);
+      };
+      console.info = function() {
+        captureLog('info', arguments);
+        originalConsole.info.apply(console, arguments);
+      };
+
       var canvas = document.querySelector("#unity-canvas");
       var container = document.querySelector("#unity-container");
       
@@ -467,7 +512,52 @@
       var gameVersion = "p1"; // Update this when you publish a new game build
       
       // Update version display
-      document.getElementById('version-display').textContent = gameVersion;
+      var versionDisplay = document.getElementById('version-display');
+      versionDisplay.textContent = gameVersion;
+      
+      // Add click handler to copy console logs to clipboard
+      versionDisplay.addEventListener('click', function() {
+        if (consoleLogs.length === 0) {
+          alert('No console logs to copy!');
+          return;
+        }
+        
+        var logText = consoleLogs.join('\n');
+        
+        // Try to copy to clipboard
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(logText).then(function() {
+            var originalText = versionDisplay.textContent;
+            versionDisplay.textContent = 'Copied!';
+            setTimeout(function() {
+              versionDisplay.textContent = originalText;
+            }, 1000);
+          }).catch(function(err) {
+            console.error('Failed to copy logs:', err);
+            alert('Failed to copy logs to clipboard');
+          });
+        } else {
+          // Fallback for older browsers
+          var textarea = document.createElement('textarea');
+          textarea.value = logText;
+          textarea.style.position = 'fixed';
+          textarea.style.left = '-9999px';
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+            document.execCommand('copy');
+            var originalText = versionDisplay.textContent;
+            versionDisplay.textContent = 'Copied!';
+            setTimeout(function() {
+              versionDisplay.textContent = originalText;
+            }, 1000);
+          } catch (err) {
+            console.error('Failed to copy logs:', err);
+            alert('Failed to copy logs to clipboard');
+          }
+          document.body.removeChild(textarea);
+        }
+      });
       
       // Load from /PreGame instead of relative path
       var buildUrl = "/PreGame/p1/" + gameName + "/Build/" + gameName;
