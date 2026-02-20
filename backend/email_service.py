@@ -1,25 +1,24 @@
-import smtplib
 import os
 import logging
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import resend
 
 logger = logging.getLogger(__name__)
 
-SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-SMTP_USER = os.environ.get("SMTP_USER", "")
-SMTP_PASS = os.environ.get("SMTP_PASS", "")
-SMTP_FROM = os.environ.get("SMTP_FROM", "")
-SMTP_USE_TLS = os.environ.get("SMTP_USE_TLS", "true").lower() == "true"
+# Resend API configuration
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+RESEND_FROM = os.environ.get("RESEND_FROM", "support@sickofitgame.com")
 SITE_NAME = os.environ.get("SITE_NAME", "Sick Of It")
 SITE_URL = os.environ.get("SITE_URL", "https://localhost")
+
+# Initialize Resend
+if RESEND_API_KEY:
+    resend.api_key = RESEND_API_KEY
 
 
 def send_access_code_email(to_email, access_code, product_id="default"):
     """Send an access code to the buyer via email."""
-    if not SMTP_USER or not SMTP_PASS:
-        logger.warning("SMTP credentials not configured, skipping email send")
+    if not RESEND_API_KEY:
+        logger.warning("RESEND_API_KEY not configured, skipping email send")
         return False
 
     redeem_url = f"{SITE_URL}/paywall/redeem?code={access_code}&product={product_id}"
@@ -30,24 +29,20 @@ def send_access_code_email(to_email, access_code, product_id="default"):
     <!DOCTYPE html>
     <html>
     <head>
+        <meta charset="UTF-8">
         <style>
-            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #e0e0e0; padding: 20px; }}
-            .container {{ max-width: 600px; margin: 0 auto; background-color: #1a1a2e; border-radius: 12px; padding: 40px; border: 1px solid #333; }}
-            .header {{ text-align: center; margin-bottom: 30px; }}
-            .header h1 {{ color: #ff6b35; margin: 0; font-size: 28px; }}
-            .code-box {{ background-color: #16213e; border: 2px solid #ff6b35; border-radius: 8px; padding: 20px; text-align: center; margin: 25px 0; }}
-            .code {{ font-family: 'Courier New', monospace; font-size: 14px; color: #00ff88; word-break: break-all; letter-spacing: 1px; }}
-            .btn {{ display: inline-block; background-color: #ff6b35; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin: 15px 0; }}
-            .warning {{ background-color: #2a1a0a; border-left: 4px solid #ff6b35; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }}
-            .footer {{ text-align: center; margin-top: 30px; color: #888; font-size: 12px; }}
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }}
+            .container {{ padding: 20px; }}
+            .code-box {{ background: #f5f5f5; border: 1px solid #ddd; padding: 15px; margin: 20px 0; text-align: center; }}
+            .code {{ font-family: 'Courier New', monospace; font-size: 18px; font-weight: bold; letter-spacing: 2px; }}
+            .button {{ display: inline-block; background: #007bff; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 15px 0; }}
+            .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }}
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="header">
-                <h1>{SITE_NAME}</h1>
-                <p>Thank you for your purchase!</p>
-            </div>
+            <h1>{SITE_NAME}</h1>
+            <p>Thank you for your purchase!</p>
             
             <p>Here is your access code:</p>
             
@@ -56,18 +51,16 @@ def send_access_code_email(to_email, access_code, product_id="default"):
             </div>
             
             <div style="text-align: center;">
-                <a href="{redeem_url}" class="btn">Activate Access Now</a>
+                <a href="{redeem_url}" class="button">Activate Access Now</a>
             </div>
             
-            <div class="warning">
-                <strong>Info:</strong>
-                <ul style="margin: 8px 0; padding-left: 20px;">
-                    <li>Use this code to unlock access.</li>
-                    <li>After activation, a secure cookie will keep you logged in.</li>
-                    <li>If you clear your cookies or switch browsers, just use the code again.</li>
-                    <li>Want to share this code with a friend? Go for it. That's your call.</li>
-                </ul>
-            </div>
+            <p><strong>Info:</strong></p>
+            <ul>
+                <li>Use this code to unlock access.</li>
+                <li>After activation, a secure cookie will keep you logged in.</li>
+                <li>If you clear your cookies or switch browsers, just use the code again.</li>
+                <li>Want to share this code with a friend? Go for it. That's your call.</li>
+            </ul>
             
             <div class="footer">
                 <p>If you did not make this purchase, please ignore this email.</p>
@@ -96,38 +89,18 @@ INFO:
 If you did not make this purchase, please ignore this email.
     """
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = SMTP_FROM or SMTP_USER
-    msg["To"] = to_email
-
-    msg.attach(MIMEText(text_body, "plain"))
-    msg.attach(MIMEText(html_body, "html"))
-
     try:
-        if SMTP_USE_TLS:
-            server = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=30)
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-        else:
-            server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=30)
+        params = {
+            "from": RESEND_FROM,
+            "to": [to_email],
+            "subject": subject,
+            "html": html_body,
+            "text": text_body,
+        }
 
-        server.login(SMTP_USER, SMTP_PASS)
-        server.sendmail(msg["From"], [to_email], msg.as_string())
-        server.quit()
-
-        logger.info("Access code email sent to %s", to_email)
+        response = resend.Emails.send(params)
+        logger.info("Access code email sent to %s via Resend (ID: %s)", to_email, response.get('id', 'unknown'))
         return True
-    except smtplib.SMTPAuthenticationError as e:
-        logger.error("SMTP authentication failed: %s", e)
-        return False
-    except smtplib.SMTPRecipientsRefused as e:
-        logger.error("Recipient refused: %s", e)
-        return False
-    except smtplib.SMTPException as e:
-        logger.error("SMTP error sending email: %s", e)
-        return False
     except Exception as e:
-        logger.error("Unexpected error sending email: %s", e)
+        logger.error("Error sending email via Resend: %s", e)
         return False

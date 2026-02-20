@@ -29,6 +29,7 @@ COPY favicon.ico /usr/share/nginx/html/favicon.ico
 COPY images/ /usr/share/nginx/html/images/
 COPY blog/ /usr/share/nginx/html/blog/
 COPY music/ /usr/share/nginx/html/music/
+COPY shorts/ /usr/share/nginx/html/shorts/
 COPY TakeGame/ /usr/share/nginx/html/TakeGame/
 
 CMD ["nginx", "-g", "daemon off;"]
@@ -47,6 +48,7 @@ COPY favicon.ico /usr/share/nginx/html/favicon.ico
 COPY images/ /usr/share/nginx/html/images/
 COPY blog/ /usr/share/nginx/html/blog/
 COPY music/ /usr/share/nginx/html/music/
+COPY shorts/ /usr/share/nginx/html/shorts/
 COPY TakeGame/ /usr/share/nginx/html/TakeGame/
 COPY index.html /usr/share/nginx/html/index.html
 COPY PreGame/ /usr/share/nginx/html/PreGame/

@@ -33,12 +33,8 @@ services:
       - COOKIE_DOMAIN=${COOKIE_DOMAIN:-}
       - SESSION_EXPIRY_DAYS=${SESSION_EXPIRY_DAYS:-365}
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASS=${SMTP_PASS}
-      - SMTP_FROM=${SMTP_FROM}
-      - SMTP_USE_TLS=${SMTP_USE_TLS:-true}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_FROM=${RESEND_FROM:-support@sickofitgame.com}
       - DB_PATH=/data/paywall.db
       - PRODUCTS=${PRODUCTS:-}
       - PROTECTED_PATHS=${PROTECTED_PATHS:-}

@@ -15,6 +15,7 @@ services:
       - ./TakeGame:/usr/share/nginx/html/TakeGame
       - ./blog:/usr/share/nginx/html/blog
       - ./music:/usr/share/nginx/html/music
+      - ./shorts:/usr/share/nginx/html/shorts
       - ./images:/usr/share/nginx/html/images
       - ./favicon.ico:/usr/share/nginx/html/favicon.ico
       - ./index.html:/usr/share/nginx/html/index.html
@@ -47,12 +48,8 @@ services:
       - COOKIE_DOMAIN=
       - SESSION_EXPIRY_DAYS=${SESSION_EXPIRY_DAYS:-365}
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-dev-secret-key}
-      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_USER=${SMTP_USER:-}
-      - SMTP_PASS=${SMTP_PASS:-}
-      - SMTP_FROM=${SMTP_FROM:-}
-      - SMTP_USE_TLS=${SMTP_USE_TLS:-true}
+      - RESEND_API_KEY=${RESEND_API_KEY:-re_hGXrNoih_AnXMUe32uaxLGdjuSek8ufdR}
+      - RESEND_FROM=${RESEND_FROM:-support@sickofitgame.com}
       - DB_PATH=/data/paywall.db
       - PRODUCTS=${PRODUCTS:-}
       - PROTECTED_PATHS=${PROTECTED_PATHS:-}

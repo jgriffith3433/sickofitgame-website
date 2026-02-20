@@ -1,217 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Free Key - Sick Of It</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            color: #e0e0e0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: rgba(40, 40, 40, 0.95);
-            border: 1px solid #444;
-            border-radius: 12px;
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
-        h1 {
-            font-size: 2em;
-            text-align: center;
-            margin-bottom: 10px;
-            color: #ffffff;
-            font-weight: 600;
-        }
-
-        .subtitle {
-            text-align: center;
-            font-size: 1em;
-            margin-bottom: 30px;
-            color: #aaa;
-        }
-
-        .key-section {
-            background: #2a2a2a;
-            border: 1px solid #555;
-            border-radius: 8px;
-            padding: 25px;
-            margin: 25px 0;
-            text-align: center;
-        }
-
-        .key-label {
-            font-size: 0.85em;
-            color: #999;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .cd-key {
-            font-size: 1.6em;
-            font-weight: 600;
-            color: #4a9eff;
-            letter-spacing: 2px;
-            font-family: 'Courier New', monospace;
-            user-select: all;
-            cursor: pointer;
-            padding: 15px;
-            background: rgba(74, 158, 255, 0.08);
-            border-radius: 6px;
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-        }
-
-        .cd-key:hover {
-            background: rgba(74, 158, 255, 0.15);
-            border-color: #4a9eff;
-        }
-
-        .copy-feedback {
-            text-align: center;
-            color: #4a9eff;
-            font-size: 0.9em;
-            margin-top: 12px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .copy-feedback.show {
-            opacity: 1;
-        }
-
-        .instructions {
-            margin: 25px 0;
-            line-height: 1.8;
-            color: #ccc;
-        }
-
-        .instructions ol {
-            padding-left: 20px;
-        }
-
-        .instructions li {
-            margin: 8px 0;
-        }
-
-        .instructions a {
-            color: #4a9eff;
-            text-decoration: none;
-        }
-
-        .instructions a:hover {
-            text-decoration: underline;
-        }
-
-        .note {
-            color: #888;
-            font-size: 0.9em;
-            text-align: center;
-            margin: 20px 0;
-            font-style: italic;
-        }
-
-        .button-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 30px;
-        }
-
-        .btn {
-            background: #4a9eff;
-            border: none;
-            color: #1a1a1a;
-            padding: 14px 28px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            text-align: center;
-        }
-
-        .btn:hover {
-            background: #6ab0ff;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
-        }
-
-        .btn.secondary {
-            background: transparent;
-            border: 1px solid #555;
-            color: #e0e0e0;
-        }
-
-        .btn.secondary:hover {
-            background: #333;
-            border-color: #666;
-            box-shadow: none;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 25px;
-            }
-
-            h1 {
-                font-size: 1.6em;
-            }
-
-            .cd-key {
-                font-size: 1.3em;
-                letter-spacing: 1px;
-            }
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
-        <h1>🎮 Free Game Key</h1>
-        <p class="subtitle">Here's your complimentary access code</p>
+<body class="bg-dark">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-5 col-md-7">
+                <div class="text-center mb-4">
+                    <h1 class="display-5 fw-bold mb-2">🎮 Free Game Key</h1>
+                    <p class="text-secondary">Here's your complimentary access code</p>
+                </div>
 
-        <div class="key-section">
-            <div class="key-label">Product Key</div>
-            <div class="cd-key" id="cdKey" onclick="copyCode()">SICK-0F1T-FR33-2026</div>
-            <div class="copy-feedback" id="copyFeedback">✓ Copied to clipboard</div>
-        </div>
+                <div class="card bg-secondary bg-opacity-10 border-secondary mb-4">
+                    <div class="card-body p-4 text-center">
+                        <div class="small text-muted text-uppercase mb-2">Product Key</div>
+                        <div class="fs-4 fw-bold text-primary mb-2" 
+                             id="cdKey" 
+                             onclick="copyCode()" 
+                             style="cursor: pointer; font-family: 'Courier New', monospace; user-select: all;">
+                            SICK-0F1T-FR33-2026
+                        </div>
+                        <div class="small text-success" id="copyFeedback" style="opacity: 0; transition: opacity 0.3s;">✓ Copied to clipboard</div>
+                    </div>
+                </div>
 
-        <div class="instructions">
-            <strong>How to redeem:</strong>
-            <ol>
-                <li>Click the key above to copy it</li>
-                <li>Visit the <a href="/paywall/redeem">redemption page</a></li>
-                <li>Paste your key and activate</li>
-                <li>Start playing immediately</li>
-            </ol>
-        </div>
+                <div class="mb-4">
+                    <strong class="d-block mb-2">How to redeem:</strong>
+                    <ol class="mb-0">
+                        <li class="mb-2">Click the key above to copy it</li>
+                        <li class="mb-2">Visit the <a href="/paywall/redeem" class="text-decoration-none">redemption page</a></li>
+                        <li class="mb-2">Paste your key and activate</li>
+                        <li>Start playing immediately</li>
+                    </ol>
+                </div>
 
-        <div class="note">
-            This key is provided free of charge. No payment required.
-        </div>
+                <p class="text-center text-muted fst-italic mb-4">
+                    This key is provided free of charge. No payment required.
+                </p>
 
-        <div class="button-container">
-            <a href="/paywall/redeem?code=SICK-0F1T-FR33-2026" class="btn">Redeem Key Now</a>
-            <a href="/" class="btn secondary">Back to Home</a>
+                <div class="d-grid gap-2">
+                    <a href="/paywall/redeem?code=SICK-0F1T-FR33-2026" class="btn btn-primary btn-lg">Redeem Key Now</a>
+                    <a href="/" class="btn btn-outline-secondary btn-lg">Back to Home</a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -219,17 +55,18 @@
         function copyCode() {
             const codeElement = document.getElementById('cdKey');
             const feedback = document.getElementById('copyFeedback');
-            const code = codeElement.textContent;
+            const code = codeElement.textContent.trim();
 
             navigator.clipboard.writeText(code).then(function() {
-                feedback.classList.add('show');
+                feedback.style.opacity = '1';
                 setTimeout(function() {
-                    feedback.classList.remove('show');
+                    feedback.style.opacity = '0';
                 }, 2000);
             }).catch(function(err) {
                 console.error('Failed to copy:', err);
             });
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

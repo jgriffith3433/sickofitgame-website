@@ -77,8 +77,33 @@ def hash_value(value):
 
 
 def generate_access_code():
-    """Generate a cryptographically secure access code."""
-    return secrets.token_urlsafe(32)
+    """
+    Generate a human-readable access code in format: SICK-XXXX-XXXX-XXXX
+    Uses alphanumeric characters (excluding ambiguous ones: 0,O,1,I,l)
+    """
+    # Character set without ambiguous characters
+    chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+    
+    # Generate 3 segments of 4 characters each
+    segment1 = ''.join(secrets.choice(chars) for _ in range(4))
+    segment2 = ''.join(secrets.choice(chars) for _ in range(4))
+    segment3 = ''.join(secrets.choice(chars) for _ in range(4))
+    
+    return f"SICK-{segment1}-{segment2}-{segment3}"
+
+
+def is_code_unique(code):
+    """Check if an access code already exists in the database."""
+    code_hash = hash_value(code)
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT id FROM access_codes WHERE code_hash = ?",
+            (code_hash,)
+        ).fetchone()
+        return row is None
+    finally:
+        conn.close()
 
 
 def generate_session_token():
@@ -87,8 +112,20 @@ def generate_session_token():
 
 
 def create_access_code(email, product_id="default", stripe_session_id=None, stripe_payment_intent=None, expires_hours=None):
-    """Create a new access code and store its hash."""
-    code = generate_access_code()
+    """Create a new access code and store its hash. Validates uniqueness."""
+    # Try up to 5 times to generate a unique code
+    max_attempts = 5
+    code = None
+    
+    for attempt in range(max_attempts):
+        code = generate_access_code()
+        if is_code_unique(code):
+            break
+        logger.warning("Generated duplicate code (attempt %d/%d), retrying", attempt + 1, max_attempts)
+    else:
+        logger.error("Failed to generate unique code after %d attempts", max_attempts)
+        return None
+    
     code_hash = hash_value(code)
     now = time.time()
     expires_at = now + (expires_hours * 3600) if expires_hours else None
