@@ -1,8 +1,8 @@
 {
   "name": "Sick Of It",
   "short_name": "SickOfIt",
-  "version": "v74",
-  "start_url": "/?v=v74",
+  "version": "v76",
+  "start_url": "/?v=v76",
   "scope": "/",
   "display": "standalone",
   "background_color": "#000000",
