@@ -64,6 +64,18 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_access_codes_stripe_session ON access_codes (stripe_session_id);
         CREATE INDEX IF NOT EXISTS idx_sessions_token_hash ON sessions (session_token_hash);
         CREATE INDEX IF NOT EXISTS idx_failed_attempts_ip ON failed_attempts (ip_address, created_at);
+
+        CREATE TABLE IF NOT EXISTS emoji_reactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            target_id TEXT NOT NULL,
+            emoji TEXT NOT NULL,
+            ip_hash TEXT NOT NULL,
+            created_at REAL NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_reactions_target ON emoji_reactions (target_id);
+        CREATE INDEX IF NOT EXISTS idx_reactions_target_emoji ON emoji_reactions (target_id, emoji);
+        CREATE INDEX IF NOT EXISTS idx_reactions_ip ON emoji_reactions (ip_hash, target_id);
     """)
 
     conn.commit()
@@ -299,5 +311,109 @@ def get_access_code_by_stripe_session(stripe_session_id):
     except Exception as e:
         logger.error("Error looking up by stripe session: %s", e)
         return None
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Emoji Reactions
+# ---------------------------------------------------------------------------
+
+
+def add_emoji_reaction(target_id, emoji, ip_address):
+    """Add an emoji reaction. Returns the new reaction id or None."""
+    ip_hash = hash_value(ip_address)
+    now = time.time()
+
+    conn = get_db()
+    try:
+        # Check if this IP already reacted with this emoji on this target
+        existing = conn.execute(
+            "SELECT id FROM emoji_reactions WHERE target_id = ? AND emoji = ? AND ip_hash = ?",
+            (target_id, emoji, ip_hash),
+        ).fetchone()
+        if existing:
+            # Toggle off - remove the reaction
+            conn.execute("DELETE FROM emoji_reactions WHERE id = ?", (existing["id"],))
+            conn.commit()
+            return {"action": "removed", "id": existing["id"]}
+
+        cursor = conn.execute(
+            "INSERT INTO emoji_reactions (target_id, emoji, ip_hash, created_at) VALUES (?, ?, ?, ?)",
+            (target_id, emoji, ip_hash, now),
+        )
+        conn.commit()
+        return {"action": "added", "id": cursor.lastrowid}
+    except Exception as e:
+        logger.error("Error adding emoji reaction: %s", e)
+        conn.rollback()
+        return None
+    finally:
+        conn.close()
+
+
+def get_reactions_for_target(target_id):
+    """Get aggregated emoji counts for a single target."""
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT emoji, COUNT(*) as count FROM emoji_reactions WHERE target_id = ? GROUP BY emoji ORDER BY count DESC",
+            (target_id,),
+        ).fetchall()
+        return {row["emoji"]: row["count"] for row in rows}
+    except Exception as e:
+        logger.error("Error getting reactions: %s", e)
+        return {}
+    finally:
+        conn.close()
+
+
+def get_reactions_batch(target_ids):
+    """Get aggregated emoji counts for multiple targets at once."""
+    if not target_ids:
+        return {}
+    conn = get_db()
+    try:
+        placeholders = ",".join("?" * len(target_ids))
+        rows = conn.execute(
+            f"SELECT target_id, emoji, COUNT(*) as count FROM emoji_reactions WHERE target_id IN ({placeholders}) GROUP BY target_id, emoji ORDER BY count DESC",
+            target_ids,
+        ).fetchall()
+        result = {}
+        for row in rows:
+            tid = row["target_id"]
+            if tid not in result:
+                result[tid] = {}
+            result[tid][row["emoji"]] = row["count"]
+        return result
+    except Exception as e:
+        logger.error("Error getting batch reactions: %s", e)
+        return {}
+    finally:
+        conn.close()
+
+
+def get_user_reactions(target_ids, ip_address):
+    """Get which emojis a specific user (by IP) has reacted with on given targets."""
+    if not target_ids:
+        return {}
+    ip_hash = hash_value(ip_address)
+    conn = get_db()
+    try:
+        placeholders = ",".join("?" * len(target_ids))
+        rows = conn.execute(
+            f"SELECT target_id, emoji FROM emoji_reactions WHERE target_id IN ({placeholders}) AND ip_hash = ?",
+            target_ids + [ip_hash],
+        ).fetchall()
+        result = {}
+        for row in rows:
+            tid = row["target_id"]
+            if tid not in result:
+                result[tid] = []
+            result[tid].append(row["emoji"])
+        return result
+    except Exception as e:
+        logger.error("Error getting user reactions: %s", e)
+        return {}
     finally:
         conn.close()

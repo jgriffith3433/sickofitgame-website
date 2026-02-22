@@ -24,6 +24,10 @@ from models import (
     check_rate_limit,
     get_access_code_by_stripe_session,
     cleanup_expired,
+    add_emoji_reaction,
+    get_reactions_for_target,
+    get_reactions_batch,
+    get_user_reactions,
 )
 from email_service import send_access_code_email
 
@@ -492,6 +496,74 @@ def gate():
         site_name=SITE_NAME,
         stripe_key=STRIPE_PUBLISHABLE_KEY,
     )
+
+
+# ---------------------------------------------------------------------------
+# Emoji Reactions API
+# ---------------------------------------------------------------------------
+
+
+@app.route("/api/reactions", methods=["POST"])
+def post_reaction():
+    """Add or toggle an emoji reaction on a target element."""
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify(error="JSON body required"), 400
+
+    target_id = data.get("target_id", "").strip()
+    emoji = data.get("emoji", "").strip()
+
+    if not target_id or not emoji:
+        return jsonify(error="target_id and emoji are required"), 400
+
+    # Validate target_id length
+    if len(target_id) > 500:
+        return jsonify(error="target_id too long"), 400
+
+    # Validate emoji - allow 1-8 characters (covers multi-codepoint emoji)
+    if len(emoji) > 8:
+        return jsonify(error="Invalid emoji"), 400
+
+    ip = get_client_ip()
+
+    # Rate limit: 60 reactions per minute per IP
+    if check_rate_limit(ip, "reaction", max_attempts=60, window_seconds=60):
+        return jsonify(error="Too many reactions. Slow down!"), 429
+
+    result = add_emoji_reaction(target_id, emoji, ip)
+    if result is None:
+        return jsonify(error="Failed to add reaction"), 500
+
+    # Return updated counts for this target
+    counts = get_reactions_for_target(target_id)
+    return jsonify(action=result["action"], reactions=counts), 200
+
+
+@app.route("/api/reactions", methods=["GET"])
+def get_reactions():
+    """Get emoji reactions. Supports single target or batch."""
+    target_id = request.args.get("target_id", "").strip()
+    targets_param = request.args.get("targets", "").strip()
+
+    ip = get_client_ip()
+
+    if target_id:
+        counts = get_reactions_for_target(target_id)
+        user = get_user_reactions([target_id], ip)
+        return jsonify(
+            reactions={target_id: counts},
+            user_reactions={target_id: user.get(target_id, [])},
+        ), 200
+
+    if targets_param:
+        target_ids = [t.strip() for t in targets_param.split(",") if t.strip()]
+        if len(target_ids) > 100:
+            return jsonify(error="Too many targets (max 100)"), 400
+        counts = get_reactions_batch(target_ids)
+        user = get_user_reactions(target_ids, ip)
+        return jsonify(reactions=counts, user_reactions=user), 200
+
+    return jsonify(error="target_id or targets parameter required"), 400
 
 
 # ---------------------------------------------------------------------------

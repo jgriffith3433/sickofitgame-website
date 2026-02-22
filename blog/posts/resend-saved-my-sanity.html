@@ -11,6 +11,7 @@
   <link rel="shortcut icon" href="../../favicon.ico">
   <link rel="icon" type="image/png" sizes="192x192" href="../../icons/icon-192.png">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../emoji-reactions.css">
   <style>
     html {
       overflow-y: scroll;
@@ -38,6 +39,7 @@
           <li class="nav-item"><a class="nav-link" href="../stats.html">Stats</a></li>
           <li class="nav-item"><a class="nav-link" href="../lore.html">Lore</a></li>
           <li class="nav-item"><a class="nav-link" href="../music.html">Music</a></li>
+          <li class="nav-item"><a class="nav-link" href="../shorts.html">Shorts</a></li>
         </ul>
       </div>
     </div>
@@ -55,7 +57,7 @@
           </div>
         </div>
 
-        <div class="card bg-secondary bg-opacity-10 border-secondary mb-4">
+        <div class="card bg-secondary bg-opacity-10 border-secondary mb-4" data-reaction-target="post:resend-saved-my-sanity#intro">
           <div class="card-body">
             <p class="lead mb-0">
               I was trying to consolidate everything. Keep it all in one place.
@@ -63,14 +65,14 @@
           </div>
         </div>
 
-        <div class="mb-4">
+        <div class="mb-4" data-reaction-target="post:resend-saved-my-sanity#the-plan">
           <h2 class="h3 mb-3">The Plan</h2>
           <p>
             Person pays $1 → Gets access code → I email them the code. Basic e-commerce stuff.
           </p>
         </div>
 
-        <div class="mb-4">
+        <div class="mb-4" data-reaction-target="post:resend-saved-my-sanity#aws-said-no">
           <h2 class="h3 mb-3">AWS Said No</h2>
           <p>
             Applied for SES production access. Denied.<br>
@@ -98,5 +100,6 @@
   </article>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../emoji-reactions.js"></script>
 </body>
 </html>
