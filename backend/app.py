@@ -62,21 +62,20 @@ UMAMI_WEBSITE_ID = os.environ.get("UMAMI_WEBSITE_ID", "")
 
 # Product config – maps product IDs to Stripe price details
 # Extend this dict to add more pay-per-content items in the future
-PRODUCTS = json.loads(
-    os.environ.get(
-        "PRODUCTS",
-        json.dumps(
-            {
-                "default": {
-                    "name": "Sick Of It - Full Access",
-                    "price_cents": 100,
-                    "currency": "usd",
-                    "description": "One-time access to the full game",
-                }
-            }
-        ),
-    )
+_products_default = json.dumps(
+    {
+        "default": {
+            "name": "Sick Of It - Full Access",
+            "price_cents": 100,
+            "currency": "usd",
+            "description": "One-time access to the full game",
+        }
+    }
 )
+PRODUCTS = json.loads(os.environ.get("PRODUCTS") or _products_default)
+
+# Free game key – users who take this key are routed to PreGame, not the full game
+FREE_GAME_KEY = os.environ.get("FREE_GAME_KEY", "SICK-0F1T-FR33-2026")
 
 # Protected paths – Nginx will call /paywall/auth-check for these
 PROTECTED_PATHS = json.loads(
@@ -123,6 +122,26 @@ def set_session_cookie(response, token, expires_at, product_id="default"):
         value=token,
         max_age=max_age,
         httponly=True,
+        secure=COOKIE_SECURE,
+        samesite="Lax",
+        domain=COOKIE_DOMAIN,
+        path="/",
+    )
+    return response
+
+
+def set_game_tier_cookie(response, tier):
+    """Set a readable (non-httpOnly) cookie indicating game tier: 'free' or 'paid'.
+    
+    This cookie can be read by JavaScript so the frontend knows whether to
+    route the user to PreGame (free) or /Game/ (paid).
+    """
+    max_age = 20 * 365 * 86400  # ~20 years
+    response.set_cookie(
+        "game_tier",
+        value=tier,
+        max_age=max_age,
+        httponly=False,  # Intentionally readable by JS
         secure=COOKIE_SECURE,
         samesite="Lax",
         domain=COOKIE_DOMAIN,
@@ -459,17 +478,26 @@ def _do_redeem(code, product_id):
             error="An error occurred. Please try again.",
         ), 500
 
-    # Redirect to the protected content with session cookie set
-    redirect_to = "/"
-    if product_id == "default":
+    # Determine tier: free key → PreGame experience, paid key → full game
+    is_free = code.upper().strip() == FREE_GAME_KEY.upper()
+    if is_free:
         redirect_to = "/Game/"
+        game_tier = "free"
+    elif product_id == "default":
+        redirect_to = "/Game/"
+        game_tier = "paid"
     else:
         redirect_to = f"/{product_id}/"
+        game_tier = "paid"
 
     response = make_response(redirect(redirect_to))
     set_session_cookie(response, token, expires_at, product_id)
+    set_game_tier_cookie(response, game_tier)
 
-    logger.info("Code redeemed successfully from %s, redirecting to %s", ip, redirect_to)
+    logger.info(
+        "Code redeemed successfully from %s (tier=%s), redirecting to %s",
+        ip, game_tier, redirect_to,
+    )
     return response
 
 
@@ -578,14 +606,33 @@ def health():
 
 @app.route("/paywall/check-access")
 def check_access():
-    """Check if user has valid session - returns JSON for frontend."""
+    """Check if user has valid session - returns JSON for frontend.
+    
+    Response includes:
+      hasAccess (bool)  – whether a valid session exists
+      tier      (str)   – 'paid' or 'free' (read from game_tier cookie)
+      product   (str)   – product id
+    """
     product_id = request.args.get("product", "default")
     token = get_session_cookie(product_id)
-    
+
     if token and validate_session(token, product_id):
-        return jsonify({"hasAccess": True, "product": product_id}), 200
-    
-    return jsonify({"hasAccess": False}), 200
+        # game_tier cookie is set by _do_redeem; default to 'paid' for
+        # existing sessions that pre-date this feature.
+        tier = request.cookies.get("game_tier", "paid")
+
+        response = make_response(
+            jsonify({"hasAccess": True, "product": product_id, "tier": tier})
+        )
+
+        # Re-stamp game_tier if it's missing (e.g. browser data was partly cleared).
+        # This ensures the cookie is always present when a valid session exists.
+        if "game_tier" not in request.cookies:
+            set_game_tier_cookie(response, tier)
+
+        return response, 200
+
+    return jsonify({"hasAccess": False, "tier": None}), 200
 
 
 @app.route("/paywall/cleanup", methods=["POST"])

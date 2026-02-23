@@ -13,6 +13,7 @@ services:
       - ./Game:/usr/share/nginx/html/Game
       - ./PreGame:/usr/share/nginx/html/PreGame
       - ./TakeGame:/usr/share/nginx/html/TakeGame
+      - ./BuyGame:/usr/share/nginx/html/BuyGame
       - ./blog:/usr/share/nginx/html/blog
       - ./music:/usr/share/nginx/html/music
       - ./shorts:/usr/share/nginx/html/shorts

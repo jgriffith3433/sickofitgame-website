@@ -31,6 +31,7 @@ COPY blog/ /usr/share/nginx/html/blog/
 COPY music/ /usr/share/nginx/html/music/
 COPY shorts/ /usr/share/nginx/html/shorts/
 COPY TakeGame/ /usr/share/nginx/html/TakeGame/
+COPY BuyGame/ /usr/share/nginx/html/BuyGame/
 
 CMD ["nginx", "-g", "daemon off;"]
 
@@ -50,6 +51,7 @@ COPY blog/ /usr/share/nginx/html/blog/
 COPY music/ /usr/share/nginx/html/music/
 COPY shorts/ /usr/share/nginx/html/shorts/
 COPY TakeGame/ /usr/share/nginx/html/TakeGame/
+COPY BuyGame/ /usr/share/nginx/html/BuyGame/
 COPY index.html /usr/share/nginx/html/index.html
 COPY PreGame/ /usr/share/nginx/html/PreGame/
 COPY Game/ /usr/share/nginx/html/Game/

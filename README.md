@@ -195,19 +195,6 @@ docker logs sickofitgame
 
    Update `nginx.conf` to add SSL configuration:
 
-   ```nginx
-   server {
-       listen 443 ssl http2;
-       listen [::]:443 ssl http2;
-       server_name sickofitgame.com;
-
-       ssl_certificate /etc/nginx/ssl/fullchain.pem;
-       ssl_certificate_key /etc/nginx/ssl/privkey.pem;
-       ssl_protocols TLSv1.2 TLSv1.3;
-       ssl_ciphers HIGH:!aNULL:!MD5;
-
-       # ... rest of config
-   }
 
    server {
        listen 80;
