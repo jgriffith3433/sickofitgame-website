@@ -553,12 +553,17 @@ def post_reaction():
         return jsonify(error="Invalid emoji"), 400
 
     ip = get_client_ip()
+    reactor_id = request.headers.get("X-Reactor-Id", "").strip()
+
+    # Validate reactor ID (must be a UUID-like string)
+    if not reactor_id or len(reactor_id) > 64:
+        return jsonify(error="X-Reactor-Id header required"), 400
 
     # Rate limit: 60 reactions per minute per IP
     if check_rate_limit(ip, "reaction", max_attempts=60, window_seconds=60):
         return jsonify(error="Too many reactions. Slow down!"), 429
 
-    result = add_emoji_reaction(target_id, emoji, ip)
+    result = add_emoji_reaction(target_id, emoji, reactor_id)
     if result is None:
         return jsonify(error="Failed to add reaction"), 500
 
@@ -574,10 +579,11 @@ def get_reactions():
     targets_param = request.args.get("targets", "").strip()
 
     ip = get_client_ip()
+    reactor_id = request.headers.get("X-Reactor-Id", "").strip()
 
     if target_id:
         counts = get_reactions_for_target(target_id)
-        user = get_user_reactions([target_id], ip)
+        user = get_user_reactions([target_id], reactor_id) if reactor_id else {}
         return jsonify(
             reactions={target_id: counts},
             user_reactions={target_id: user.get(target_id, [])},
@@ -588,7 +594,7 @@ def get_reactions():
         if len(target_ids) > 100:
             return jsonify(error="Too many targets (max 100)"), 400
         counts = get_reactions_batch(target_ids)
-        user = get_user_reactions(target_ids, ip)
+        user = get_user_reactions(target_ids, reactor_id) if reactor_id else {}
         return jsonify(reactions=counts, user_reactions=user), 200
 
     return jsonify(error="target_id or targets parameter required"), 400

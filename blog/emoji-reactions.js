@@ -57,6 +57,21 @@
     ]
   };
 
+  // ── User Identity ──────────────────────────────────────────────────
+  function getReactorId() {
+    const KEY = 'emoji_reactor_id';
+    let id = localStorage.getItem(KEY);
+    if (!id) {
+      id = crypto.randomUUID ? crypto.randomUUID() : 
+        'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+          const r = Math.random() * 16 | 0;
+          return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+      localStorage.setItem(KEY, id);
+    }
+    return id;
+  }
+
   // ── State ──────────────────────────────────────────────────────────
   let activePickerEl = null;  // Currently open picker element
   let allTargets = [];        // All reaction target IDs on the page
@@ -69,7 +84,9 @@
     try {
       const params = new URLSearchParams();
       params.set('targets', targetIds.join(','));
-      const resp = await fetch(`/api/reactions?${params}`);
+      const resp = await fetch(`/api/reactions?${params}`, {
+        headers: { 'X-Reactor-Id': getReactorId() },
+      });
       if (!resp.ok) return;
       const data = await resp.json();
       reactionsCache = { ...reactionsCache, ...data.reactions };
@@ -83,7 +100,10 @@
     try {
       const resp = await fetch('/api/reactions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Reactor-Id': getReactorId(),
+        },
         body: JSON.stringify({ target_id: targetId, emoji }),
       });
       if (!resp.ok) {
@@ -108,16 +128,6 @@
     picker.className = 'emoji-picker';
     picker.setAttribute('data-picker-for', targetId);
 
-    // Search bar
-    const searchWrap = document.createElement('div');
-    searchWrap.className = 'emoji-picker-search';
-    const searchInput = document.createElement('input');
-    searchInput.type = 'text';
-    searchInput.placeholder = 'Search emoji...';
-    searchInput.className = 'emoji-search-input';
-    searchWrap.appendChild(searchInput);
-    picker.appendChild(searchWrap);
-
     // Category tabs
     const tabBar = document.createElement('div');
     tabBar.className = 'emoji-tabs';
@@ -133,7 +143,6 @@
         tabBar.querySelectorAll('.emoji-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         showCategory(grid, cat);
-        searchInput.value = '';
       });
       tabBar.appendChild(tab);
     });
@@ -145,30 +154,6 @@
     picker.appendChild(grid);
 
     showCategory(grid, categories[0]);
-
-    // Search functionality
-    searchInput.addEventListener('input', () => {
-      const query = searchInput.value.toLowerCase().trim();
-      if (!query) {
-        // Reset to active tab category
-        const activeTab = tabBar.querySelector('.emoji-tab.active');
-        const catIndex = [...tabBar.children].indexOf(activeTab);
-        showCategory(grid, categories[catIndex]);
-        return;
-      }
-      // Search all categories
-      const all = [];
-      for (const [cat, emojis] of Object.entries(EMOJI_CATEGORIES)) {
-        if (cat.toLowerCase().includes(query)) {
-          all.push(...emojis);
-        } else {
-          all.push(...emojis); // Show all, filtering by category name match is enough
-        }
-      }
-      // For search, just show all emojis
-      const allEmojis = Object.values(EMOJI_CATEGORIES).flat();
-      showEmojis(grid, allEmojis, targetId);
-    });
 
     // Click handler for emojis (delegated)
     grid.addEventListener('click', async (e) => {
@@ -219,9 +204,6 @@
     document.body.appendChild(picker);
     positionPicker(picker, anchorEl);
     activePickerEl = picker;
-
-    // Focus search
-    requestAnimationFrame(() => searchInput.focus());
 
     // Close on outside click (deferred to avoid immediate close)
     setTimeout(() => {

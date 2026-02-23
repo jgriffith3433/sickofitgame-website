@@ -72,28 +72,6 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Search */
-.emoji-picker-search {
-  padding: 10px 12px 6px;
-}
-.emoji-search-input {
-  width: 100%;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px;
-  background: rgba(255,255,255,0.06);
-  color: #e0e0e0;
-  padding: 7px 12px;
-  font-size: 0.85rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.emoji-search-input::placeholder {
-  color: rgba(255,255,255,0.3);
-}
-.emoji-search-input:focus {
-  border-color: rgba(13, 110, 253, 0.6);
-}
-
 /* Tabs */
 .emoji-tabs {
   display: flex;

@@ -320,17 +320,17 @@ def get_access_code_by_stripe_session(stripe_session_id):
 # ---------------------------------------------------------------------------
 
 
-def add_emoji_reaction(target_id, emoji, ip_address):
-    """Add an emoji reaction. Returns the new reaction id or None."""
-    ip_hash = hash_value(ip_address)
+def add_emoji_reaction(target_id, emoji, user_id):
+    """Add an emoji reaction. Toggle: add if not present, remove if exists."""
+    uid_hash = hash_value(user_id)
     now = time.time()
 
     conn = get_db()
     try:
-        # Check if this IP already reacted with this emoji on this target
+        # Check if this user already reacted with this emoji on this target
         existing = conn.execute(
             "SELECT id FROM emoji_reactions WHERE target_id = ? AND emoji = ? AND ip_hash = ?",
-            (target_id, emoji, ip_hash),
+            (target_id, emoji, uid_hash),
         ).fetchone()
         if existing:
             # Toggle off - remove the reaction
@@ -340,7 +340,7 @@ def add_emoji_reaction(target_id, emoji, ip_address):
 
         cursor = conn.execute(
             "INSERT INTO emoji_reactions (target_id, emoji, ip_hash, created_at) VALUES (?, ?, ?, ?)",
-            (target_id, emoji, ip_hash, now),
+            (target_id, emoji, uid_hash, now),
         )
         conn.commit()
         return {"action": "added", "id": cursor.lastrowid}
@@ -393,17 +393,17 @@ def get_reactions_batch(target_ids):
         conn.close()
 
 
-def get_user_reactions(target_ids, ip_address):
-    """Get which emojis a specific user (by IP) has reacted with on given targets."""
+def get_user_reactions(target_ids, user_id):
+    """Get which emojis a specific user has reacted with on given targets."""
     if not target_ids:
         return {}
-    ip_hash = hash_value(ip_address)
+    uid_hash = hash_value(user_id)
     conn = get_db()
     try:
         placeholders = ",".join("?" * len(target_ids))
         rows = conn.execute(
             f"SELECT target_id, emoji FROM emoji_reactions WHERE target_id IN ({placeholders}) AND ip_hash = ?",
-            target_ids + [ip_hash],
+            target_ids + [uid_hash],
         ).fetchall()
         result = {}
         for row in rows:
