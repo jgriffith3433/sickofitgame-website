@@ -1,3 +1,6 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
 # Git LFS tracking for large Unity WebGL build files
 *.bundle filter=lfs diff=lfs merge=lfs -text
 *.gz filter=lfs diff=lfs merge=lfs -text

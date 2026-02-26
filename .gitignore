@@ -245,3 +245,7 @@ volumes/
 *.db
 *.sqlite
 *.sqlite3
+
+# WebGL game builds (large, rebuilt from Unity)
+/Game/
+/PreGame/
