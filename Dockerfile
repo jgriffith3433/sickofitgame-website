@@ -30,6 +30,7 @@ COPY images/ /usr/share/nginx/html/images/
 COPY blog/ /usr/share/nginx/html/blog/
 COPY music/ /usr/share/nginx/html/music/
 COPY shorts/ /usr/share/nginx/html/shorts/
+COPY videos/ /usr/share/nginx/html/videos/
 COPY TakeGame/ /usr/share/nginx/html/TakeGame/
 COPY BuyGame/ /usr/share/nginx/html/BuyGame/
 
@@ -50,6 +51,7 @@ COPY images/ /usr/share/nginx/html/images/
 COPY blog/ /usr/share/nginx/html/blog/
 COPY music/ /usr/share/nginx/html/music/
 COPY shorts/ /usr/share/nginx/html/shorts/
+COPY videos/ /usr/share/nginx/html/videos/
 COPY TakeGame/ /usr/share/nginx/html/TakeGame/
 COPY BuyGame/ /usr/share/nginx/html/BuyGame/
 COPY index.html /usr/share/nginx/html/index.html
